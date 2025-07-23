@@ -98,6 +98,8 @@ class LoraController:
         try:
             # Send length (1 byte), then the data itself
             self.cmd_socket.sendall(bytes([len(data)]) + data)
+            print(f"*SEND_COMMAND |:Send data: {message} | {time.strftime('%H:%M:%S', time.localtime() )}")
+            print(f"MAIN LOOP | Received data: {message} | {time.strftime('%H:%M:%S', time.localtime() )}")
         except BrokenPipeError:
             print("Connection lost while sending command.")
             self.cmd_socket = None
@@ -158,14 +160,14 @@ if __name__ == "__main__":
                 
                 print(f"MAIN LOOP | Received data: {message} | {time.strftime('%H:%M:%S', time.localtime() )}")
 
-            #controller.send_command(b'Hello') #отправка сообщения 
+            controller.send_command(b'Hello') #отправка сообщения 
 
             
             if not controller.cmd_socket and not controller.data_socket:#аварийный выход
                  print("MAIN LOOP | Both connections lost. Exiting.")
                  break
 
-            time.sleep(0.5) # Main loop delay
+            time.sleep(2) # Main loop delay
 
     except ConnectionRefusedError:
         print("Could not start the controller. Aborting.")
