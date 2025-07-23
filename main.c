@@ -84,22 +84,8 @@ int main() {
         perror("listen error (data)");
         return 1;
     }
-
-    // --- 2. Initialize LoRa ---
-    LoRa myLoRa = newLoRa();
-    myLoRa.CS_pin = 8;
-    myLoRa.reset_pin = 25;
-    myLoRa.DIO0_pin = 17; // This should be the GPIO number, not the physical pin
-    myLoRa.SPI_channel = 0;
-
-    if (LoRa_init(&myLoRa) == LORA_OK) {
-        printf(" LoRa init OK\n");
-    } else {
-        printf(" LoRa init FAIL\n");
-        return 1;
-    }
-
-    // --- 3. Wait for Python client connections ---
+}
+    // --- 2. Wait for Python client connections ---
     printf(" Waiting for Python client to connect to command socket...\n");
     if ((cmd_client_fd = accept(cmd_listen_fd, NULL, NULL)) == -1) {
         perror("accept command socket failed");
@@ -118,6 +104,20 @@ int main() {
     close(cmd_listen_fd);
     close(data_listen_fd);
 
+    
+    // --- 3. Initialize LoRa ---
+    LoRa myLoRa = newLoRa();
+    myLoRa.CS_pin = 8;
+    myLoRa.reset_pin = 25;
+    myLoRa.DIO0_pin = 17; // This should be the GPIO number, not the physical pin
+    myLoRa.SPI_channel = 0;
+
+    if (LoRa_init(&myLoRa) == LORA_OK) {
+        send_to_python("Lora init", strlen("Lora init"));
+    } else {
+        send_to_python("Lora fail", strlen("Lora fail"));
+        return 1;
+    
     // --- 4. Main Loop ---
     uint8_t RxBuffer[BUFFER_SIZE];
     uint8_t bytesReceived;
@@ -129,10 +129,9 @@ int main() {
         if (digitalRead(myLoRa.DIO0_pin) == HIGH) {
             bytesReceived = LoRa_receive(&myLoRa, RxBuffer, BUFFER_SIZE);
             if (bytesReceived > 0) {
-                printf("Received %d bytes from LoRa: '", bytesReceived);
+                //printf("Received %d bytes from LoRa: '", bytesReceived);
                 fflush(stdout);
                 write(STDOUT_FILENO, RxBuffer, bytesReceived); // Print raw data safely
-                printf("'\n");
                 send_to_python(RxBuffer, bytesReceived);
             }
         }
@@ -150,12 +149,15 @@ int main() {
             if (read(cmd_client_fd, &len, 1) > 0) {
                 if (read(cmd_client_fd, buffer, len) > 0) {
                     printf("Received command from Python (len %d)\n", len);
-                    // TODO: Process the command, e.g., send via LoRa
+                    for(int i = 0, i < len, i++){
+                        printf("%d",*(buffer));
+                    }
+                    LoRa_transmit(&myLoRa,buffer,len);
                     // LoRa_sendMessage(&myLoRa, buffer, len);
                 }
             } else {
                 // Connection closed by client
-                printf("🐍 Python command client disconnected.\n");
+                printf("Python command client disconnected.\n");
                 close(cmd_client_fd);
                 cmd_client_fd = -1;
                 break; // Exit loop if command client disconnects
