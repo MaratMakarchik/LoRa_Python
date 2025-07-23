@@ -1,141 +1,177 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include "LoRa.h"
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-/*-------------------------------------------------*/
-#define BUFFER_SIZE 16
+#include <fcntl.h>
+#include <sys/select.h>
+#include <stddef.h> // Required for offsetof()
+#include "LoRa.h"
+
 #define CMD_SOCKET_PATH "/tmp/lora_cmd.sock"
 #define DATA_SOCKET_PATH "/tmp/lora_data.sock"
-/*-------------------------------------------------*/
-int cmd_socket, data_socket;
-struct sockaddr_un addr;
-/*-------------------------------------------------*/
-void init_sockets() {
-    // Создаем командный сокет (прием от Python)
-    cmd_socket = socket(AF_UNIX, SOCK_STREAM, 0);
-    memset(&addr, 0, sizeof(addr));
-    addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, CMD_SOCKET_PATH, sizeof(addr.sun_path)-1);
-    unlink(CMD_SOCKET_PATH);
-    bind(cmd_socket, (struct sockaddr*)&addr, sizeof(addr));
-    listen(cmd_socket, 5);
+#define BUFFER_SIZE 255
 
-    // Создаем сокет данных (отправка в Python)
-    data_socket = socket(AF_UNIX, SOCK_STREAM, 0);
-    strncpy(addr.sun_path, DATA_SOCKET_PATH, sizeof(addr.sun_path)-1);
-    unlink(DATA_SOCKET_PATH);
-    bind(data_socket, (struct sockaddr*)&addr, sizeof(addr));
-    listen(data_socket, 5);
-}
-
-void handle_commands() {
-    int client_fd = accept(cmd_socket, NULL, NULL);
-    
-    while(1) {
-        uint8_t len;
-        uint8_t buffer[256];
-        
-        // Читаем длину сообщения
-        if(read(client_fd, &len, 1) <= 0) break;
-        
-        // Читаем данные
-        ssize_t n = read(client_fd, buffer, len);
-        if(n <= 0) break;
-        
-        // Вызываем функцию отправки в LoRa
-        lora_send(buffer, len);
-    }
-    close(client_fd);
-}
+// Global file descriptors for the established client connections
+int cmd_client_fd = -1;
+int data_client_fd = -1;
 
 void send_to_python(uint8_t* data, uint8_t len) {
-    int client_fd = accept(data_socket, NULL, NULL);
-    write(client_fd, &len, 1);     // Отправляем длину
-    write(client_fd, data, len);   // Отправляем данные
-    close(client_fd);
+    if (data_client_fd < 0) return; // Don't send if client is not connected
+    
+    // It's safer to check the return values of write
+    if (write(data_client_fd, &len, 1) < 0) {
+        perror("write len failed");
+        data_client_fd = -1; // Mark connection as dead
+        return;
+    }
+    if (write(data_client_fd, data, len) < 0) {
+        perror("write data failed");
+        data_client_fd = -1; // Mark connection as dead
+    }
 }
 
-/*-------------------------------------------------*/
 int main() {
-    init_sockets();
-    
-    LoRa myLoRa = newLoRa();
-    LoRa_init(&myLoRa);
-    myLoRa.CS_pin = 8;      // BCM GPIO 8
-    myLoRa.reset_pin = 25;  // BCM GPIO 25
-    myLoRa.DIO0_pin = 17;   // BCM GPIO 24
-    myLoRa.SPI_channel = 0; // SPI Channel 0
+    // --- 1. Initialize Sockets ---
+    int cmd_listen_fd, data_listen_fd;
+    struct sockaddr_un addr;
 
-    uint16_t status = LoRa_init(&myLoRa);
-    if (status == LORA_OK) {
-        send_to_python("LoRa module initialized successfully!\n", strlen("LoRa module initialized successfully!\n"));
-    } 
-    else {
-        send_to_python("Error init LoRa\n", strlen("Error init LoRa\n"))
+    // Create listening socket for commands
+    if ((cmd_listen_fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+        perror("socket error (command)");
         return 1;
     }
 
-    uint8_t RxBuffer[BUFFER_SIZE];
-    uint8_t bytesReceived;
-    int current_status;
-    LoRa_startReceiving(&myLoRa);
-    // В обработчике приема LoRa
-    while(1) {
-        current_status = digitalRead(myLoRa.DIO0_pin);
-        if(current_status == HIGH){
-            bytesReceived = LoRa_receive(&myLoRa, RxBuffer, BUFFER_SIZE);
-            send_to_python(RxBuffer, BUFFER_SIZE)
-        }
-        // Неблокирующая проверка команд
-        fd_set set;
-        FD_ZERO(&set);
-        FD_SET(cmd_socket, &set);
-        struct timeval timeout = {0, 10000}; // 1 мс
-        
-        if(select(cmd_socket+1, &set, NULL, NULL, &timeout) > 0) {
-            handle_commands();
-        }
-    }
-}
+    memset(&addr, 0, sizeof(addr));
+    addr.sun_family = AF_UNIX;
+    strncpy(addr.sun_path, CMD_SOCKET_PATH, sizeof(addr.sun_path) - 1);
+    unlink(CMD_SOCKET_PATH); // Remove old socket file if it exists
 
+    // *** THE KEY FIX IS HERE: Calculate the correct address length ***
+    socklen_t addr_len = offsetof(struct sockaddr_un, sun_path) + strlen(addr.sun_path);
 
-
-
-int main(void){
-    LoRa myLoRa = newLoRa();
-    myLoRa.CS_pin = 8;      // BCM GPIO 8
-    myLoRa.reset_pin = 25;  // BCM GPIO 25
-    myLoRa.DIO0_pin = 17;   // BCM GPIO 24
-    myLoRa.SPI_channel = 0; // SPI Channel 0
-
-    uint16_t status = LoRa_init(&myLoRa);
-    if (status == LORA_OK) {
-        printf("LoRa module initialized successfully!\n");
-    } 
-    else {
-        printf("Failed to initialize LoRa module: %d\n", status);
+    if (bind(cmd_listen_fd, (struct sockaddr*)&addr, addr_len) == -1) {
+        perror("bind error (command)");
         return 1;
     }
 
+    if (listen(cmd_listen_fd, 1) == -1) {
+        perror("listen error (command)");
+        return 1;
+    }
+
+    // Create listening socket for data
+    if ((data_listen_fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+        perror("socket error (data)");
+        return 1;
+    }
+    
+    memset(&addr, 0, sizeof(addr));
+    addr.sun_family = AF_UNIX;
+    strncpy(addr.sun_path, DATA_SOCKET_PATH, sizeof(addr.sun_path) - 1);
+    unlink(DATA_SOCKET_PATH);
+
+    // *** APPLYING THE SAME FIX FOR THE DATA SOCKET ***
+    addr_len = offsetof(struct sockaddr_un, sun_path) + strlen(addr.sun_path);
+
+    if (bind(data_listen_fd, (struct sockaddr*)&addr, addr_len) == -1) {
+        perror("bind error (data)");
+        return 1;
+    }
+
+    if (listen(data_listen_fd, 1) == -1) {
+        perror("listen error (data)");
+        return 1;
+    }
+
+    // --- 2. Initialize LoRa ---
+    LoRa myLoRa = newLoRa();
+    myLoRa.CS_pin = 8;
+    myLoRa.reset_pin = 25;
+    myLoRa.DIO0_pin = 17; // This should be the GPIO number, not the physical pin
+    myLoRa.SPI_channel = 0;
+
+    if (LoRa_init(&myLoRa) == LORA_OK) {
+        printf(" LoRa init OK\n");
+    } else {
+        printf(" LoRa init FAIL\n");
+        return 1;
+    }
+
+    // --- 3. Wait for Python client connections ---
+    printf(" Waiting for Python client to connect to command socket...\n");
+    if ((cmd_client_fd = accept(cmd_listen_fd, NULL, NULL)) == -1) {
+        perror("accept command socket failed");
+        return 1;
+    }
+    printf(" Command client connected.\n");
+
+    printf(" Waiting for Python client to connect to data socket...\n");
+    if ((data_client_fd = accept(data_listen_fd, NULL, NULL)) == -1) {
+        perror("accept data socket failed");
+        return 1;
+    }
+    printf(" Data client connected.\n");
+
+    // Listening sockets are no longer needed after connections are established
+    close(cmd_listen_fd);
+    close(data_listen_fd);
+
+    // --- 4. Main Loop ---
     uint8_t RxBuffer[BUFFER_SIZE];
     uint8_t bytesReceived;
-
     LoRa_startReceiving(&myLoRa);
-    
-    while(1){
-        int current_status = digitalRead(myLoRa.DIO0_pin);
-        if(current_status == HIGH){
+    printf(" Starting main loop...\n");
+
+    while (1) {
+        // Check for incoming LoRa data
+        if (digitalRead(myLoRa.DIO0_pin) == HIGH) {
             bytesReceived = LoRa_receive(&myLoRa, RxBuffer, BUFFER_SIZE);
-            for (int i = 0; i < bytesReceived; i++) {
-                printf("%c",RxBuffer[i]);
+            if (bytesReceived > 0) {
+                printf("Received %d bytes from LoRa: '", bytesReceived);
+                fflush(stdout);
+                write(STDOUT_FILENO, RxBuffer, bytesReceived); // Print raw data safely
+                printf("'\n");
+                send_to_python(RxBuffer, bytesReceived);
             }
-            printf("\n");
-
         }
-        delay(10);
+
+        // Non-blocking check for commands from Python
+        fd_set read_fds;
+        FD_ZERO(&read_fds);
+        FD_SET(cmd_client_fd, &read_fds);
+        struct timeval timeout = {0, 10000}; // 10ms timeout
+
+        if (select(cmd_client_fd + 1, &read_fds, NULL, NULL, &timeout) > 0) {
+            uint8_t len;
+            uint8_t buffer[BUFFER_SIZE];
+
+            if (read(cmd_client_fd, &len, 1) > 0) {
+                if (read(cmd_client_fd, buffer, len) > 0) {
+                    printf("Received command from Python (len %d)\n", len);
+                    // TODO: Process the command, e.g., send via LoRa
+                    // LoRa_sendMessage(&myLoRa, buffer, len);
+                }
+            } else {
+                // Connection closed by client
+                printf("🐍 Python command client disconnected.\n");
+                close(cmd_client_fd);
+                cmd_client_fd = -1;
+                break; // Exit loop if command client disconnects
+            }
+        }
+        
+        // Exit if data connection is also lost
+        if (data_client_fd < 0) {
+            printf("Python data client disconnected. Exiting.\n");
+            break;
+        }
     }
+
+    // Cleanup
+    if (cmd_client_fd > 0) close(cmd_client_fd);
+    if (data_client_fd > 0) close(data_client_fd);
+    printf("Program finished.\n");
     return 0;
 }
