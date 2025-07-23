@@ -155,8 +155,8 @@ if __name__ == "__main__":
             message = controller.get_message() #проверка и получение сообщения
             
             if message:
-                time_struct = time.localtime()
-                print(f"MAIN LOOP | Received data: {message} | {time.strftime("%H:%M:%S", time_struct )}")
+                
+                print(f"MAIN LOOP | Received data: {message} | {time.strftime('%H:%M:%S', time.localtime() )}")
 
             controller.send_command(b'Hello') #отправка сообщения 
 
