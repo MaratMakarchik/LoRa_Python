@@ -17,28 +17,34 @@
 int cmd_client_fd = -1;
 int data_client_fd = -1;
 
-void send_to_python(uint8_t* data, uint8_t len) {
-    if (data_client_fd < 0) return; // Don't send if client is not connected
-    
+void send_to_python(uint8_t *data, uint8_t len)
+{
+    if (data_client_fd < 0)
+        return; // Don't send if client is not connected
+
     // It's safer to check the return values of write
-    if (write(data_client_fd, &len, 1) < 0) {
+    if (write(data_client_fd, &len, 1) < 0)
+    {
         perror("write len failed");
         data_client_fd = -1; // Mark connection as dead
         return;
     }
-    if (write(data_client_fd, data, len) < 0) {
+    if (write(data_client_fd, data, len) < 0)
+    {
         perror("write data failed");
         data_client_fd = -1; // Mark connection as dead
     }
 }
 
-int main() {
+int main()
+{
     // --- 1. Initialize Sockets ---
     int cmd_listen_fd, data_listen_fd;
     struct sockaddr_un addr;
 
     // Create listening socket for commands
-    if ((cmd_listen_fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+    if ((cmd_listen_fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+    {
         perror("socket error (command)");
         return 1;
     }
@@ -51,22 +57,25 @@ int main() {
     // *** THE KEY FIX IS HERE: Calculate the correct address length ***
     socklen_t addr_len = offsetof(struct sockaddr_un, sun_path) + strlen(addr.sun_path);
 
-    if (bind(cmd_listen_fd, (struct sockaddr*)&addr, addr_len) == -1) {
+    if (bind(cmd_listen_fd, (struct sockaddr *)&addr, addr_len) == -1)
+    {
         perror("bind error (command)");
         return 1;
     }
 
-    if (listen(cmd_listen_fd, 1) == -1) {
+    if (listen(cmd_listen_fd, 1) == -1)
+    {
         perror("listen error (command)");
         return 1;
     }
 
     // Create listening socket for data
-    if ((data_listen_fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+    if ((data_listen_fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+    {
         perror("socket error (data)");
         return 1;
     }
-    
+
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
     strncpy(addr.sun_path, DATA_SOCKET_PATH, sizeof(addr.sun_path) - 1);
@@ -75,25 +84,29 @@ int main() {
     // *** APPLYING THE SAME FIX FOR THE DATA SOCKET ***
     addr_len = offsetof(struct sockaddr_un, sun_path) + strlen(addr.sun_path);
 
-    if (bind(data_listen_fd, (struct sockaddr*)&addr, addr_len) == -1) {
+    if (bind(data_listen_fd, (struct sockaddr *)&addr, addr_len) == -1)
+    {
         perror("bind error (data)");
         return 1;
     }
 
-    if (listen(data_listen_fd, 1) == -1) {
+    if (listen(data_listen_fd, 1) == -1)
+    {
         perror("listen error (data)");
         return 1;
     }
-     // --- 2. Wait for Python client connections ---
+    // --- 2. Wait for Python client connections ---
     printf(" Waiting for Python client to connect to command socket...\n");
-    if ((cmd_client_fd = accept(cmd_listen_fd, NULL, NULL)) == -1) {
+    if ((cmd_client_fd = accept(cmd_listen_fd, NULL, NULL)) == -1)
+    {
         perror("accept command socket failed");
         return 1;
     }
     printf(" Command client connected.\n");
 
     printf(" Waiting for Python client to connect to data socket...\n");
-    if ((data_client_fd = accept(data_listen_fd, NULL, NULL)) == -1) {
+    if ((data_client_fd = accept(data_listen_fd, NULL, NULL)) == -1)
+    {
         perror("accept data socket failed");
         return 1;
     }
@@ -103,7 +116,6 @@ int main() {
     close(cmd_listen_fd);
     close(data_listen_fd);
 
-    
     // --- 3. Initialize LoRa ---
     LoRa myLoRa = newLoRa();
     myLoRa.CS_pin = 8;
@@ -111,24 +123,30 @@ int main() {
     myLoRa.DIO0_pin = 17; // This should be the GPIO number, not the physical pin
     myLoRa.SPI_channel = 0;
 
-    if (LoRa_init(&myLoRa) == LORA_OK) {
+    if (LoRa_init(&myLoRa) == LORA_OK)
+    {
         send_to_python("Lora init", strlen("Lora init"));
-    } else {
+    }
+    else
+    {
         send_to_python("Lora fail", strlen("Lora fail"));
         return 1;
-    
+    }
     // --- 4. Main Loop ---
     uint8_t RxBuffer[BUFFER_SIZE];
     uint8_t bytesReceived;
     LoRa_startReceiving(&myLoRa);
     printf(" Starting main loop...\n");
 
-    while (1) {
+    while (1)
+    {
         // Check for incoming LoRa data
-        if (digitalRead(myLoRa.DIO0_pin) == HIGH) {
+        if (digitalRead(myLoRa.DIO0_pin) == HIGH)
+        {
             bytesReceived = LoRa_receive(&myLoRa, RxBuffer, BUFFER_SIZE);
-            if (bytesReceived > 0) {
-                //printf("Received %d bytes from LoRa: '", bytesReceived);
+            if (bytesReceived > 0)
+            {
+                // printf("Received %d bytes from LoRa: '", bytesReceived);
                 fflush(stdout);
                 write(STDOUT_FILENO, RxBuffer, bytesReceived); // Print raw data safely
                 send_to_python(RxBuffer, bytesReceived);
@@ -141,20 +159,26 @@ int main() {
         FD_SET(cmd_client_fd, &read_fds);
         struct timeval timeout = {0, 10000}; // 10ms timeout
 
-        if (select(cmd_client_fd + 1, &read_fds, NULL, NULL, &timeout) > 0) {
+        if (select(cmd_client_fd + 1, &read_fds, NULL, NULL, &timeout) > 0)
+        {
             uint8_t len;
             uint8_t buffer[BUFFER_SIZE];
 
-            if (read(cmd_client_fd, &len, 1) > 0) {
-                if (read(cmd_client_fd, buffer, len) > 0) {
+            if (read(cmd_client_fd, &len, 1) > 0)
+            {
+                if (read(cmd_client_fd, buffer, len) > 0)
+                {
                     printf("Received command from Python (len %d)\n", len);
-                    for(int i = 0, i < len, i++){
-                        printf("%d",*(buffer));
+                    for (int i = 0, i < len, i++)
+                    {
+                        printf("%d", *(buffer + i));
                     }
-                    LoRa_transmit(&myLoRa,buffer,len);
+                    LoRa_transmit(&myLoRa, buffer, len);
                     // LoRa_sendMessage(&myLoRa, buffer, len);
                 }
-            } else {
+            }
+            else
+            {
                 // Connection closed by client
                 printf("Python command client disconnected.\n");
                 close(cmd_client_fd);
@@ -162,17 +186,20 @@ int main() {
                 break; // Exit loop if command client disconnects
             }
         }
-        
+
         // Exit if data connection is also lost
-        if (data_client_fd < 0) {
+        if (data_client_fd < 0)
+        {
             printf("Python data client disconnected. Exiting.\n");
             break;
         }
     }
 
     // Cleanup
-    if (cmd_client_fd > 0) close(cmd_client_fd);
-    if (data_client_fd > 0) close(data_client_fd);
+    if (cmd_client_fd > 0)
+        close(cmd_client_fd);
+    if (data_client_fd > 0)
+        close(data_client_fd);
     printf("Program finished.\n");
     return 0;
-} 
+}
