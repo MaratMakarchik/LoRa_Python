@@ -1,3 +1,5 @@
+/* sudo gcc -o lora_app main.c LoRa.c -lwiringPi*/
+
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -169,12 +171,7 @@ int main()
             {
                 if (read(cmd_client_fd, buffer, len) > 0)
                 {
-                    printf("Received command from Python (len %d)\n", len);
-                    for(int i = 0; i < len; i++){
-                        printf("%d",*(buffer + i));
-                    }
                     LoRa_transmit(&myLoRa,buffer,len,1000);
-                    // LoRa_sendMessage(&myLoRa, buffer, len);
                 }
             }
             else
