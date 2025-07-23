@@ -155,9 +155,10 @@ if __name__ == "__main__":
             message = controller.get_message() #проверка и получение сообщения
             
             if message:
-                print(f"MAIN LOOP | Received data: {message} | Flag was set by receiver thread.")
+                print(f"MAIN LOOP | Received data: {message} | {time.strftime("%H:%M:%S", time.localtime())}")
 
             controller.send_command(b'Hello') #отправка сообщения 
+
             
             if not controller.cmd_socket and not controller.data_socket:#аварийный выход
                  print("MAIN LOOP | Both connections lost. Exiting.")
