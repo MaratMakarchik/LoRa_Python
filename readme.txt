@@ -1,4 +1,4 @@
-
+"full chanel .py <--> .c<--> LoRa"
 добавлено:
     -автозапус lora_app из sender.py
     -переброс данных полученных из sender.py в lora_app на модуль LoRa
