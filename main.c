@@ -61,9 +61,7 @@ void send_to_python(uint8_t* data, uint8_t len) {
 /*-------------------------------------------------*/
 int main() {
     init_sockets();
-    
     LoRa myLoRa = newLoRa();
-    LoRa_init(&myLoRa);
     myLoRa.CS_pin = 8;      // BCM GPIO 8
     myLoRa.reset_pin = 25;  // BCM GPIO 25
     myLoRa.DIO0_pin = 17;   // BCM GPIO 24
@@ -87,7 +85,7 @@ int main() {
         current_status = digitalRead(myLoRa.DIO0_pin);
         if(current_status == HIGH){
             bytesReceived = LoRa_receive(&myLoRa, RxBuffer, BUFFER_SIZE);
-            send_to_python(RxBuffer, BUFFER_SIZE)
+            send_to_python(RxBuffer, BUFFER_SIZE);
         }
         // Неблокирующая проверка команд
         fd_set set;
