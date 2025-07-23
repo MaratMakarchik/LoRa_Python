@@ -116,6 +116,7 @@ int main() {
     } else {
         send_to_python("Lora fail", strlen("Lora fail"));
         return 1;
+	}
     
     // --- 4. Main Loop ---
     uint8_t RxBuffer[BUFFER_SIZE];
@@ -148,10 +149,10 @@ int main() {
             if (read(cmd_client_fd, &len, 1) > 0) {
                 if (read(cmd_client_fd, buffer, len) > 0) {
                     printf("Received command from Python (len %d)\n", len);
-                    for(int i = 0, i < len, i++){
-                        printf("%d",*(buffer));
+                    for(int i = 0; i < len; i++){
+                        printf("%d",*(buffer + i));
                     }
-                    LoRa_transmit(&myLoRa,buffer,len);
+                    LoRa_transmit(&myLoRa,buffer,len,1000);
                     // LoRa_sendMessage(&myLoRa, buffer, len);
                 }
             } else {
