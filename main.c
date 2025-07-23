@@ -150,8 +150,6 @@ int main()
             if (bytesReceived > 0)
             {
                 // printf("Received %d bytes from LoRa: '", bytesReceived);
-                fflush(stdout);
-                write(STDOUT_FILENO, RxBuffer, bytesReceived); // Print raw data safely
                 send_to_python(RxBuffer, bytesReceived);
             }
         }
