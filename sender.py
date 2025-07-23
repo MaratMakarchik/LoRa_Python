@@ -78,9 +78,9 @@ class LoraController:
         try:
             while True:
                 # Пример отправки команды каждые 5 секунд
-                # if int(time.time()) % 5 == 0:
-                #     self.send_command(b'Hello from Python!')
-                #     time.sleep(1) # Чтобы не отправлять много раз в одну секунду
+                if int(time.time()) % 5 == 0:
+                    self.send_command(b'Hello')
+                    time.sleep(1) # Чтобы не отправлять много раз в одну секунду
 
                 raw_data = self.receive_data()
                 if raw_data is not None:
