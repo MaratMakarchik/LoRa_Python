@@ -84,8 +84,7 @@ int main() {
         perror("listen error (data)");
         return 1;
     }
-}
-    // --- 2. Wait for Python client connections ---
+     // --- 2. Wait for Python client connections ---
     printf(" Waiting for Python client to connect to command socket...\n");
     if ((cmd_client_fd = accept(cmd_listen_fd, NULL, NULL)) == -1) {
         perror("accept command socket failed");
@@ -176,4 +175,4 @@ int main() {
     if (data_client_fd > 0) close(data_client_fd);
     printf("Program finished.\n");
     return 0;
-}
+} 
