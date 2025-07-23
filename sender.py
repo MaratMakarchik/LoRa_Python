@@ -150,13 +150,11 @@ if __name__ == "__main__":
         controller.start() # Start the background listener
 
         print("--- Starting main application loop ---")
-        last_command_time = time.time()
     #------------------------------------------------------------  
         while True:
             message = controller.get_message() #проверка и получение сообщения
             
-            if message:
-                
+            if message: 
                 print(f"MAIN LOOP | Received data: {message} | {time.strftime('%H:%M:%S', time.localtime() )}")
 
             controller.send_command(b'Hello') #отправка сообщения 
