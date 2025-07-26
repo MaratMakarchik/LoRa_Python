@@ -51,6 +51,21 @@ async def handle_lora_communication(controller, update, context):
 async def start_measure(update, context):
     query = update.callback_query
     await query.answer()
+    if 'lora_process' in context.bot_data:
+        context.bot_data['lora_process'].terminate()
+        context.bot_data['lora_process'].wait()
+        del context.bot_data['lora_process']
+
+    if 'lora_controller' in context.bot_data:
+        context.bot_data['lora_controller'].stop()
+        del context.bot_data['lora_controller']
+
+        # Удаляем старые сокеты
+    for sock in ['/tmp/lora_cmd.sock', '/tmp/lora_data.sock']:
+        try:
+            os.unlink(sock)
+        except FileNotFoundError:
+            pass
 
     # Получаем абсолютный путь к lora_app
     script_dir = os.path.dirname(os.path.abspath(__file__))
