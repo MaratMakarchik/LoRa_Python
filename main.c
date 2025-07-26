@@ -169,8 +169,8 @@ int main()
             {
                 if (read(cmd_client_fd, buffer, len) > 0)
                 {
-                    send_to_python(buffer, 4);
-                    LoRa_transmit(&myLoRa,buffer,len,1000);
+                    //send_to_python(buffer, 4);
+                    LoRa_transmit(&myLoRa,(uint8_t*)"10 1",4,1000);
                 }
             }
             else
