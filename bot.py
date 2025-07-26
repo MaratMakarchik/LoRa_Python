@@ -25,7 +25,7 @@ async def start_measure(update, context):
     query = update.callback_query
     await query.answer()
     await query.message.reply_text("Измерения начаты")
-    """ТУТ БУДУТ ИЗМЕЕРЕНИЯ"""
+    """ТУТ БУДУТ ИЗМЕРЕНИЯ"""
     await go_on(update, context)
 
 
