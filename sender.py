@@ -157,7 +157,9 @@ if __name__ == "__main__":
             if message: 
                 print(f"MAIN LOOP | Received data: {message} | {time.strftime('%H:%M:%S', time.localtime() )}")
 
-            controller.send_command(b'Hello') #отправка сообщения 
+            output_message = input()
+            controller.send_command(output_message.encode())  # отправка сообщения
+            #controller.send_command(b'Hello') #отправка сообщения 
 
             
             if not controller.cmd_socket and not controller.data_socket:#аварийный выход
