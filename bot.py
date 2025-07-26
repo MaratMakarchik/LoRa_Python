@@ -29,7 +29,7 @@ async def handle_lora_communication(controller, update, context):
     chat_id = update.effective_chat.id
     try:
         # Отправляем команду на начало измерений
-        controller.send_command(b'start')
+        controller.send_command(b'10 1')
         await context.bot.send_message(chat_id, "Команда 'start' отправлена")
 
         # Цикл получения сообщений

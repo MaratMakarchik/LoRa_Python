@@ -143,6 +143,7 @@ if __name__ == "__main__":
     try:
         # Use Popen to run the C program in the background
         c_process = subprocess.Popen(["./lora_app"])
+
         print(f"Started C process with PID: {c_process.pid}")
         time.sleep(2) # Give the C program time to set up sockets
 
@@ -157,9 +158,9 @@ if __name__ == "__main__":
             if message: 
                 print(f"MAIN LOOP | Received data: {message} | {time.strftime('%H:%M:%S', time.localtime() )}")
 
-            output_message = input()
-            controller.send_command(output_message.encode())  # отправка сообщения
-            #controller.send_command(b'Hello') #отправка сообщения 
+            #output_message = "10 1"
+            #controller.send_command(output_message.encode())  # отправка сообщения
+             
 
             
             if not controller.cmd_socket and not controller.data_socket:#аварийный выход
