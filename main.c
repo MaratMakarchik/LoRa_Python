@@ -169,10 +169,7 @@ int main()
             {
                 if (read(cmd_client_fd, buffer, len) > 0)
                 {
-                    for(int i = 0;i<len;i++)
-                    {
-                        printf("on c : %c",buffer[i]);
-                    }
+                    send_to_python(buffer, 4);
                     LoRa_transmit(&myLoRa,buffer,len,1000);
                 }
             }
