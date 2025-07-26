@@ -47,25 +47,44 @@ async def handle_lora_communication(controller, update, context):
         await context.bot.send_message(chat_id, "Контроллер LoRa остановлен")
 
 
-
 async def start_measure(update, context):
     query = update.callback_query
     await query.answer()
-    await query.message.reply_text("Измерения начаты")
-    """ТУТ БУДУТ ИЗМЕРЕНИЯ"""
-    controller = context.bot_data.get('lora_controller')
-    if not controller:
+
+    # Получаем абсолютный путь к lora_app
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    lora_app_path = os.path.join(script_dir, "lora_app")
+
+    # Запускаем C-программу как подпроцесс
+    if 'lora_process' not in context.bot_data:
         try:
-            controller = LoraController()
-            controller.start()
-            context.bot_data['lora_controller'] = controller
-            await query.message.reply_text("Контроллер LoRa инициализирован")
+            lora_process = subprocess.Popen([lora_app_path])
+            context.bot_data['lora_process'] = lora_process
+            await asyncio.sleep(2)  # Даем время на создание сокетов
+            await query.message.reply_text(f"Запущен процесс lora_app с PID: {lora_process.pid}")
         except Exception as e:
-            await query.message.reply_text(f"Ошибка инициализации: {str(e)}")
+            await query.message.reply_text(f"Ошибка запуска lora_app: {str(e)}")
             return
 
-    # Запускаем асинхронную задачу для работы с LoRa
-    asyncio.create_task(handle_lora_communication(controller, update, context))
+    try:
+        # Проверяем существование сокетов
+        for sock_path in ['/tmp/lora_cmd.sock', '/tmp/lora_data.sock']:
+            if not os.path.exists(sock_path):
+                await query.message.reply_text(f"Сокет {sock_path} не найден!")
+                return
+
+        # Создаем контроллер
+        controller = LoraController()
+        controller.start()
+        context.bot_data['lora_controller'] = controller
+        await query.message.reply_text("Контроллер LoRa инициализирован")
+    except Exception as e:
+        await query.message.reply_text(f"Ошибка инициализации: {str(e)}")
+        return
+
+    await query.message.reply_text("Измерения начаты")
+    asyncio.create_task(handle_lora_communication(controller, query, context))
+
     await go_on(update, context)
 
 
