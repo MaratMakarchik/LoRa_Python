@@ -27,7 +27,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def handle_lora_communication(controller, update, context):
-    chat_id = update.effective_chat.id
+    chat_id = update.message.chat_id
     try:
         # Отправляем команду на начало измерений
         controller.send_command(b'10 1')
