@@ -37,6 +37,12 @@ async def handle_lora_communication(controller, update, context):
         while True:
             message = controller.get_message()
             if message:
+                words = message.split()
+                if len(words) == 3:
+                    sensor_number, temperature, co2 = words
+                    await context.bot.send_message(f"Номер датчика, {sensor_number}")
+                    await context.bot.send_message(f"Температура, {temperature}")
+                    await context.bot.send_message(f"CO2, {co2}")
                 await context.bot.send_message(chat_id, f"Получены данные: {message}")
             await asyncio.sleep(1)  # Неблокирующая задержка
 
