@@ -15,8 +15,8 @@ def compile_lora_app():
     # Define paths to source files in the c directory
     c_dir = os.path.join(project_root, 'file_c')
     main_c = os.path.join(c_dir, 'main.c')
-    lora_c = os.path.join(c_dir, 'lora.c')
-    lora_h = os.path.join(c_dir, 'lora.h')
+    lora_c = os.path.join(c_dir, 'LoRa.c')
+    lora_h = os.path.join(c_dir, 'LoRa.h')
     bin_dir = os.path.join(c_dir, 'bin')
     
     # Check if source files exist
