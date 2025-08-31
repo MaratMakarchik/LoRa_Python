@@ -1,3 +1,4 @@
+# compile_lora_app.py
 import subprocess
 import os
 import sys
@@ -6,15 +7,19 @@ def compile_lora_app():
     """
     Compiles main.c and LoRa.c into lora_app binary using sudo gcc
     """
-    # Define file paths based on actual project structure
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Project root
-    bin_dir = os.path.join(project_root, 'bin')  # Binary output directory
+    # Get the current directory (python folder)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # Get the project root directory (one level up from python)
+    project_root = os.path.dirname(current_dir)
     
-    # Check if source files exist in root directory
-    main_c = os.path.join(project_root, 'main.c')
-    lora_c = os.path.join(project_root, 'LoRa.c')
-    lora_h = os.path.join(project_root, 'LoRa.h')
+    # Define paths to source files in the c directory
+    c_dir = os.path.join(project_root, 'c')
+    main_c = os.path.join(c_dir, 'main.c')
+    lora_c = os.path.join(c_dir, 'lora.c')
+    lora_h = os.path.join(c_dir, 'lora.h')
+    bin_dir = os.path.join(c_dir, 'bin')
     
+    # Check if source files exist
     if not os.path.exists(main_c):
         raise FileNotFoundError(f"File {main_c} not found")
     if not os.path.exists(lora_c):
@@ -22,7 +27,7 @@ def compile_lora_app():
     if not os.path.exists(lora_h):
         print(f"Warning: Header file {lora_h} not found")
     
-    # Create bin directory if it doesn't exist
+    # Create bin directory in c folder if it doesn't exist
     os.makedirs(bin_dir, exist_ok=True)
     
     # Form compilation command
@@ -32,7 +37,7 @@ def compile_lora_app():
         '-o', output_file,
         main_c, lora_c,
         '-lwiringPi',
-        '-I', project_root  # Add project root to include path for LoRa.h
+        '-I', c_dir  # Add c directory to include path for header files
     ]
     
     # Execute compilation
@@ -43,7 +48,7 @@ def compile_lora_app():
             check=True,
             text=True,
             capture_output=True,
-            timeout=30  # 30 second timeout
+            timeout=30
         )
         print("Compilation completed successfully!")
         print(f"Binary file created: {output_file}")
