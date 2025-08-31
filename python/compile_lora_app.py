@@ -1,7 +1,8 @@
-# compile_lora_app.py
 import subprocess
 import os
 import sys
+
+from terminal_output import print_green, print_red
 
 def compile_lora_app():
     """
@@ -25,7 +26,7 @@ def compile_lora_app():
     if not os.path.exists(lora_c):
         raise FileNotFoundError(f"File {lora_c} not found")
     if not os.path.exists(lora_h):
-        print(f"Warning: Header file {lora_h} not found")
+        print_red(f"Warning: Header file {lora_h} not found")
     
     # Create bin directory in c folder if it doesn't exist
     os.makedirs(bin_dir, exist_ok=True)
@@ -42,7 +43,7 @@ def compile_lora_app():
     
     # Execute compilation
     try:
-        print(f"Compiling {main_c} and {lora_c}...")
+        print("Compiling main.c and LoRa.c...")
         result = subprocess.run(
             command,
             check=True,
@@ -50,23 +51,23 @@ def compile_lora_app():
             capture_output=True,
             timeout=30
         )
-        print("Compilation completed successfully!")
+        print_green("Compilation completed successfully!")
         print(f"Binary file created: {output_file}")
         return True
         
     except subprocess.CalledProcessError as e:
-        print(f"Compilation error (exit code: {e.returncode}):")
+        print_red(f"Compilation error (exit code: {e.returncode})")
         print(f"STDERR: {e.stderr}")
         if e.stdout:
             print(f"STDOUT: {e.stdout}")
         return False
         
     except subprocess.TimeoutExpired:
-        print("Error: compilation timed out")
+        print_red("Error: compilation timed out")
         return False
         
     except Exception as e:
-        print(f"Unexpected error: {str(e)}")
+        print_red(f"Unexpected error: {str(e)}")
         return False
 
 # For direct script execution

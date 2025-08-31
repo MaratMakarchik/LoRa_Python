@@ -1,4 +1,3 @@
-# main.py
 import subprocess
 import os
 import sys
@@ -7,20 +6,21 @@ import sys
 from compile_lora_app import compile_lora_app
 from sender import LoraController
 from database import SensorDatabase
+from terminal_output import print_green, print_red
 
-MES_LEN = 90
 CONFIG_SENSOR = 'sensor.conf'
 
 def main():
-    # Fixed string formatting
-    print(f"---{'start program':^{MES_LEN}}---")
+   
+    print_green('start program')
 
     # Build and execute C files
     if compile_lora_app():
-        print(f"---{'The bin file has been successfully compiled':^{MES_LEN}}---")
+        print_green('The bin file has been successfully compiled')
     else:
-        print(f"---{'bin file assembly error':^{MES_LEN}}---")
+        print_red('bin file assembly error')
         sys.exit(1)
+    
      # Create and populate database
     sensor_db = SensorDatabase()
     try:
@@ -34,12 +34,13 @@ def main():
                           sensor_id, sensor_location = line.split('@', 1)
                           sensor_db.add_sensor(sensor_id.strip(), sensor_location.strip())
                       else:
-                          print(f"---{'Invalid format in config file':^{MES_LEN}}---")
+                          print_red('Invalid format in config file')
+                    
     except FileNotFoundError:
-          print(f"---{'the sensor configuration file was not found':^{MES_LEN}}---")
+          print_red('the sensor configuration file was not found')
           sys.exit(1)
     except Exception as e:
-          print(f"---{f'Error reading config file: {str(e)}':^{MES_LEN}}---")
+          print_red(f'Error reading config file: {str(e)}')
           sys.exit(1)
 
 if __name__ == "__main__":
