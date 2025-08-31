@@ -11,40 +11,35 @@ CONFIG_SENSOR = 'sensor.conf'
 
 
 def main():
-    print("---{:^MES_LEN}---".format("start program"))
+    # Исправлено форматирование строки (f-строки)
+    print(f"---{'start program':^{MES_LEN}}---")
 
-    #Сборка и выполнения файлов Си
-    
+    # Сборка и выполнение файлов Си
     if compile_lora_app():
-        print("---{:^MES_LEN}---".format("The bin file has been successfully compiled"))
+        print(f"---{'The bin file has been successfully compiled':^{MES_LEN}}---")
     else:
-        print("---{:^MES_LEN}---".format("bin file assembly error"))
+        print(f"---{'bin file assembly error':^{MES_LEN}}---")
         sys.exit(1)
     
-    #Создание и заполнение БД
+    # Создание и заполнение БД
     sensor_db = SensorDatabase()
-    with open (CONFIG_SENSOR,encoding='utf-8') as f:
-        if f.closed:
-             print("---{:^MES_LEN}---".format("the sensor configuration file was not found or has not been opened"))
-             sys.exit(1)
-        else:
-            while True:
-                content = f.readline()
-                if not content:
-                    break
-                sensor_id, sensor_location = content.split("@")
-                sensor_db.add_sensor(sensor_id,sensor_location)
-            
-
-
-if __name__ == "__main__":
-	main()
-
-
-
-
-
-
+    try:
+        with open(CONFIG_SENSOR, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line:  # Пропускаем пустые строки
+                    # Добавляем проверку на наличие разделителя
+                    if '@' in line:
+                        sensor_id, sensor_location = line.split('@', 1)
+                        sensor_db.add_sensor(sensor_id.strip(), sensor_location.strip())
+                    else:
+                        print(f"---{'Invalid format in config file':^{MES_LEN}}---")
+    except FileNotFoundError:
+        print(f"---{'the sensor configuration file was not found':^{MES_LEN}}---")
+        sys.exit(1)
+    except Exception as e:
+        print(f"---{f'Error reading config file: {str(e)}':^{MES_LEN}}---")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
