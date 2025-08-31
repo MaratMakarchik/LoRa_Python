@@ -13,7 +13,7 @@ def compile_lora_app():
     project_root = os.path.dirname(current_dir)
     
     # Define paths to source files in the c directory
-    c_dir = os.path.join(project_root, 'c')
+    c_dir = os.path.join(project_root, 'file_c')
     main_c = os.path.join(c_dir, 'main.c')
     lora_c = os.path.join(c_dir, 'lora.c')
     lora_h = os.path.join(c_dir, 'lora.h')
