@@ -15,38 +15,42 @@ from terminal_output import print_green, print_red
 CONFIG_SENSOR = 'sensor.conf' 
 # Sensor polling frequency time
 SURVEY_TIME = 20
-# The measurement time of one sensor
-# This is done because the MQ - 7 takes time to heat up
+# Measurement time for one sensor
+# This is needed because the MQ-7 sensor requires heating time
 BEACON_TIME = 5
 
-# Глобальные переменные для управления потоками
+# Global variables for thread management
 survey_timer: Optional[threading.Timer] = None
 running = True
 
 def data_survey(controller):
-    """Функция для опроса данных сенсора"""
+    """Function to poll sensor data"""
     try:
         command = f'st {BEACON_TIME} fn'
         controller.send_command(command.encode())
     except Exception as e:
         print_red(f"Error in data_survey: {e}")
+    finally:
+        # Schedule next survey after completing current one
+        if running:
+            schedule_next_survey(controller)
 
 def schedule_next_survey(controller):
-    """Планирование следующего опроса"""
+    """Schedule the next survey"""
     global survey_timer
     if running:
         survey_timer = threading.Timer(SURVEY_TIME, data_survey, args=(controller,))
-        survey_timer.daemon = True  # Поток завершится с основным программой
+        survey_timer.daemon = True  # Thread will terminate with main program
         survey_timer.start()
 
 def load_sensor_config(config_path):
-    """Загрузка конфигурации сенсоров из файла"""
+    """Load sensor configuration from file"""
     sensors = []
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             for line_num, line in enumerate(f, 1):
                 line = line.strip()
-                if line and not line.startswith('#'):  # Пропускаем пустые строки и комментарии
+                if line and not line.startswith('#'):  # Skip empty lines and comments
                     if '@' in line:
                         sensor_id, sensor_location = line.split('@', 1)
                         sensors.append((sensor_id.strip(), sensor_location.strip()))
@@ -62,15 +66,15 @@ def load_sensor_config(config_path):
         return None
 
 def get_project_root():
-    """Получение корневой директории проекта"""
+    """Get project root directory"""
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def get_executable_path():
-    """Получение пути к исполняемому файлу"""
+    """Get path to executable file"""
     return os.path.join(get_project_root(), 'file_c', 'bin', 'lora_app')
 
 def signal_handler(sig, frame):
-    """Обработчик сигналов для graceful shutdown"""
+    """Signal handler for graceful shutdown"""
     global running
     print_red("\nReceived shutdown signal. Shutting down...")
     running = False
@@ -82,13 +86,13 @@ def main():
    
     print_green('Starting program')
 
-    # Установка обработчиков сигналов
+    # Set up signal handlers
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
     # Build C files
     if compile_lora_app():
-        print_green('The binary file has been successfully compiled')
+        print_green('Binary file compiled successfully')
     else:
         print_red('Binary file compilation error')
         sys.exit(1)
@@ -109,14 +113,14 @@ def main():
     
     print_green(f"Loaded {len(sensors)} sensors from configuration")
 
-    # Launching the C program
+    # Launch C program
     controller = None
     c_process = None
     
     try:
         exe_file = get_executable_path()
         
-        # Проверяем существование исполняемого файла
+        # Check if executable file exists
         if not os.path.exists(exe_file):
             print_red(f"Executable file not found: {exe_file}")
             sys.exit(1)
@@ -124,26 +128,26 @@ def main():
         c_process = subprocess.Popen([exe_file])
         
         print_green(f"Started C process with PID: {c_process.pid}")
-        time.sleep(2)  # Give the C program time to set up sockets
+        time.sleep(2)  # Give C program time to set up sockets
 
         controller = LoraController()
-        controller.start()  # Start the background listener
+        controller.start()  # Start background listener
 
         print_green("Starting main application loop")
         
-        # Запускаем первый опрос
-        schedule_next_survey(controller)
+        # Start first survey
+        data_survey(controller)
 
         # Main loop
         while running:
             try:
-                message = controller.get_message()  # Checking and receiving the message
+                message = controller.get_message()  # Check and receive messages
                 
                 if message: 
                     print_green(f"Received data: {message} | {time.strftime('%H:%M:%S', time.localtime())}")
-                    # Здесь можно добавить обработку сообщения и сохранение в БД
+                    # Add message processing and database saving here
 
-                # Проверяем состояние соединений
+                # Check connection status
                 if not controller.cmd_socket and not controller.data_socket:
                     print_red("Both connections lost. Exiting")
                     break
@@ -152,7 +156,7 @@ def main():
                 
             except Exception as e:
                 print_red(f"Error in main loop: {e}")
-                time.sleep(1)  # Задержка при ошибке
+                time.sleep(1)  # Delay on error
 
     except ConnectionRefusedError:
         print_red("Could not start the controller. Aborting")
@@ -168,15 +172,15 @@ def main():
         
         if c_process:
             try:
-                c_process.terminate()  # Terminate the C subprocess
-                # Ждем завершения процесса
+                c_process.terminate()  # Terminate C subprocess
+                # Wait for process to finish
                 wait_time = 5
                 for _ in range(wait_time * 10):
                     if c_process.poll() is not None:
                         break
                     time.sleep(0.1)
                 else:
-                    # Если процесс не завершился, принудительно убиваем
+                    # Force kill if process doesn't terminate
                     c_process.kill()
                     print_red("C process had to be killed")
                 

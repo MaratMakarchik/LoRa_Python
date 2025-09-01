@@ -1,3 +1,4 @@
+# sender.py
 import subprocess
 import os
 import sys
@@ -162,7 +163,7 @@ if __name__ == "__main__":
 
             output_message = input()
             controller.send_command(output_message.encode())  # отправка сообщения
-            
+
             if not controller.cmd_socket and not controller.data_socket:#аварийный выход
                  print_red("Both connections lost. Exiting")
                  break
