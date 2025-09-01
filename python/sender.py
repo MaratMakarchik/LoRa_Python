@@ -1,8 +1,11 @@
-import time
-import socket
 import subprocess
+import os
+import sys
+import socket
 import threading
 import queue
+import time
+from terminal_output import print_green, print_red
 
 class LoraController:
     """
@@ -24,15 +27,15 @@ class LoraController:
             # Connect the command socket
             self.cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.cmd_socket.connect('/tmp/lora_cmd.sock')
-            print("Connected to command socket.")
+            print_green("Connected to command socket")
 
             # Connect the data socket
             self.data_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.data_socket.connect('/tmp/lora_data.sock')
-            print("Connected to data socket.")
+            print_green("Connected to data socket")
 
         except ConnectionRefusedError:
-            print("Connection refused. Make sure the C program is running.")
+            print_red("Connection refused. Make sure the C program is running")
             self.close_sockets()
             raise
 
@@ -42,7 +45,7 @@ class LoraController:
             self.stop_event.clear()
             self.receiver_thread = threading.Thread(target=self._data_receiver_loop, daemon=True)
             self.receiver_thread.start()
-            print("Data receiver thread started.")
+            print_green("Data receiver thread started")
 
     def _data_receiver_loop(self):
         """
@@ -60,7 +63,7 @@ class LoraController:
                 len_byte = self.data_socket.recv(1)
 
                 if not len_byte:
-                    print("Data connection closed by server.")
+                    print_red("Data connection closed by server")
                     self.data_socket = None
                     break
                 
@@ -76,15 +79,15 @@ class LoraController:
                 # This is expected, allows the loop to check stop_event
                 continue
             except socket.error as e:
-                print(f"Socket error on receive: {e}")
+                print_red(f"Socket error on receive: {e}")
                 self.data_socket = None
                 break
         
-        print("Data receiver thread stopped.")
+        print_red("Data receiver thread stopped")
 
     def stop(self):
         """Stops the receiver thread and closes all sockets."""
-        print("Stopping controller...")
+        print_green("Stopping controller")
         if self.receiver_thread and self.receiver_thread.is_alive():
             self.stop_event.set()
             self.receiver_thread.join() # Wait for the thread to finish
@@ -93,14 +96,14 @@ class LoraController:
     def send_command(self, data: bytes):
         """Sends a command through the established connection."""
         if not self.cmd_socket:
-            print("Command socket is not connected.")
+            print_red("Command socket is not connected")
             return
         try:
             # Send length (1 byte), then the data itself
             self.cmd_socket.sendall(bytes([len(data)]) + data)
-            print(f"*SEND_COMMAND |:Send data: {data} | {time.strftime('%H:%M:%S', time.localtime() )}")
+            print_green(f"Send data: {data} | {time.strftime('%H:%M:%S', time.localtime())}")
         except BrokenPipeError:
-            print("Connection lost while sending command.")
+            print_red("Connection lost while sending command")
             self.cmd_socket = None
             
     def get_message(self):
@@ -129,11 +132,11 @@ class LoraController:
         if self.cmd_socket:
             self.cmd_socket.close()
             self.cmd_socket = None
-            print("Command socket closed.")
+            print_green("Command socket closed")
         if self.data_socket:
             self.data_socket.close()
             self.data_socket = None
-            print("Data socket closed.")
+            print_green("Data socket closed")
 
 
 if __name__ == "__main__":
@@ -143,40 +146,38 @@ if __name__ == "__main__":
     try:
         # Use Popen to run the C program in the background
         c_process = subprocess.Popen(["./lora_app"])
-        print(f"Started C process with PID: {c_process.pid}")
+        print_green(f"Started C process with PID: {c_process.pid}")
         time.sleep(2) # Give the C program time to set up sockets
 
         controller = LoraController()
         controller.start() # Start the background listener
 
-        print("--- Starting main application loop ---")
+        print_green("Starting main application loop")
     #------------------------------------------------------------  
         while True:
             message = controller.get_message() #проверка и получение сообщения
             
             if message: 
-                print(f"MAIN LOOP | Received data: {message} | {time.strftime('%H:%M:%S', time.localtime() )}")
+                print_green(f"Received data: {message} | {time.strftime('%H:%M:%S', time.localtime())}")
 
             output_message = input()
             controller.send_command(output_message.encode())  # отправка сообщения
-            #controller.send_command(b'Hello') #отправка сообщения 
-
             
             if not controller.cmd_socket and not controller.data_socket:#аварийный выход
-                 print("MAIN LOOP | Both connections lost. Exiting.")
+                 print_red("Both connections lost. Exiting")
                  break
 
             time.sleep(2) # Main loop delay
 
     except ConnectionRefusedError:
-        print("Could not start the controller. Aborting.")
+        print_red("Could not start the controller. Aborting")
     except KeyboardInterrupt:
-        print("\nCtrl+C detected. Shutting down.")
+        print_red("Ctrl+C detected. Shutting down")
     finally:
         if controller:
             controller.stop()
         if c_process:
             c_process.terminate() # Terminate the C subprocess
             c_process.wait()
-            print("C process terminated.")
-        print("Application finished.")
+            print_green("C process terminated")
+        print_green("Application finished")
