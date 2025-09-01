@@ -1,6 +1,6 @@
-для работы запустить python/main.py
-заполнение бд происходит из файла sensor.conf по следующему образцу: номер_сенсора@расположение_сенсора
-код для сенсоров смотри https://github.com/MaratMakarchik/STM32-data-collection-system
+Для работы запустить python/main.py
+Заполнение бд происходит из файла sensor.conf по следующему образцу: номер_сенсора@расположение_сенсора
+Код для сенсоров смотри https://github.com/MaratMakarchik/STM32-data-collection-system
 
 Разработка БДРВ:
     fix7:

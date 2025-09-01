@@ -14,10 +14,10 @@ from terminal_output import print_green, print_red
 
 CONFIG_SENSOR = 'sensor.conf' 
 # Sensor polling frequency time
-SURVEY_TIME = 100 
+SURVEY_TIME = 20
 # The measurement time of one sensor
 # This is done because the MQ - 7 takes time to heat up
-BEACON_TIME = 40
+BEACON_TIME = 5
 
 # Глобальные переменные для управления потоками
 survey_timer: Optional[threading.Timer] = None
