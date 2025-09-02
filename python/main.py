@@ -179,12 +179,13 @@ def main() -> None:
                 message = controller.get_message()
                 
                 if message: 
-                    print_green(f"Received: {message} | {time.strftime('%H:%M:%S')}")
                     if filter_string(message):
+                        print_green(f"Received: {message} | {time.strftime('%H:%M:%S')}")
                         sensor_id, value, co2_level = message.strip().split()
                         sensor_db.add_measurement(sensor_id, value, co2_level)
                     else:
                         # Log invalid messages
+                        print_red(f"Received ERROR: {message} | {time.strftime('%H:%M:%S')}")
                         with open(err_log_path, 'a', encoding='utf-8') as f:
                             f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {message}\n")
 
