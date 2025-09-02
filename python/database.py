@@ -136,3 +136,36 @@ class SensorDatabase:
 
     def close(self):
         self.conn.close()
+if __name__ == "__main__":
+    db = SensorDatabase()
+    
+    # Добавляем датчики (делается один раз)
+    db.add_sensor(1, "Комната 101")
+    db.add_sensor(2, "Кухня")
+    db.add_sensor(3, "Спальня")
+    
+    # Добавляем измерения
+    db.add_measurement(1, 25.73, 450)
+    db.add_measurement(2, 23.15, 500)
+    db.add_measurement(1, 24.89, 460)
+    db.add_measurement(3, 22.41, 420)
+    
+    # Получаем список всех датчиков
+    print("Все датчики:")
+    for sensor in db.get_sensors():
+        print(sensor)
+    
+    # Получаем последние измерения
+    print("\nПоследние измерения:")
+    for measurement in db.get_measurements(limit=5):
+        print(measurement)
+    
+    # Получаем средние показания за последние 24 часа
+    averages = db.get_average_readings()
+    print(f"\nСредние показания за 24 часа: Температура={averages['avg_temperature']}°C, CO2={averages['avg_co2']}ppm")
+    
+    # Получаем последнее измерение для датчика 1
+    latest = db.get_latest_measurement(1)
+    print(f"\nПоследнее измерение датчика 1: Температура={latest[2]}°C, CO2={latest[3]}ppm")
+    
+    db.close()
