@@ -14,8 +14,8 @@ from terminal_output import print_green, print_red
 
 CONFIG_SENSOR = 'sensor.conf'
 ERROR_MESSAGE_LOG = 'error_message.log'
-SURVEY_TIME = 20
-BEACON_TIME = 5
+SURVEY_TIME = 5*60
+BEACON_TIME = 2*60
 
 # Global variables for thread management
 survey_timer: Optional[threading.Timer] = None
@@ -26,7 +26,7 @@ def data_survey(controller: LoraController) -> None:
     try:
         command = f'st {BEACON_TIME} fn'
         controller.send_command(command.encode())
-        
+
     except Exception as e:
         print_red(f"Error in data_survey: {e}")
     finally:
@@ -186,11 +186,13 @@ def main() -> None:
                     else:
                         # Log invalid messages
                         with open(err_log_path, 'a', encoding='utf-8') as f:
-                            f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - Invalid: {message}\n")
+                            f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {message}\n")
 
                 time.sleep(0.1)
                 
             except Exception as e:
+                with open(err_log_path, 'a', encoding='utf-8') as f:
+                            f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - Error in main loop: {e}\n")
                 print_red(f"Error in main loop: {e}")
                 time.sleep(1)
 
