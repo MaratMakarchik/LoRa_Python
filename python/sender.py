@@ -102,7 +102,7 @@ class LoraController:
         try:
             # Send length (1 byte), then the data itself
             self.cmd_socket.sendall(bytes([len(data)]) + data)
-            print_green(f"Send data: {data} | {time.strftime('%H:%M:%S', time.localtime())}")
+             # print_green(f"Send data: {data} | {time.strftime('%H:%M:%S', time.localtime())}")
         except BrokenPipeError:
             print_red("Connection lost while sending command")
             self.cmd_socket = None

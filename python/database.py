@@ -56,9 +56,6 @@ class SensorDatabase:
         if cursor.fetchone() is None:
             raise ValueError(f"Датчик с ID {sensor_id} не зарегистрирован")
         
-        # Округляем температуру до двух знаков после запятой
-        temperature = round(temperature, 2) if temperature is not None else None
-        
         # Добавляем измерение
         self.conn.execute(
             "INSERT INTO measurements (sensor_id, temperature, co2_level) VALUES (?, ?, ?)",
