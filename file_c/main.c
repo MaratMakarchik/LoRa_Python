@@ -98,21 +98,18 @@ int main()
         return 1;
     }
     // --- 2. Wait for Python client connections ---
-    printf(" Waiting for Python client to connect to command socket...\n");
+    
     if ((cmd_client_fd = accept(cmd_listen_fd, NULL, NULL)) == -1)
     {
         perror("accept command socket failed");
         return 1;
     }
-    printf(" Command client connected.\n");
-
-    printf(" Waiting for Python client to connect to data socket...\n");
+    
     if ((data_client_fd = accept(data_listen_fd, NULL, NULL)) == -1)
     {
         perror("accept data socket failed");
         return 1;
     }
-    printf(" Data client connected.\n");
 
     // Listening sockets are no longer needed after connections are established
     close(cmd_listen_fd);
@@ -149,7 +146,6 @@ int main()
             bytesReceived = LoRa_receive(&myLoRa, RxBuffer, BUFFER_SIZE);
             if (bytesReceived > 0)
             {
-                // printf("Received %d bytes from LoRa: '", bytesReceived);
                 send_to_python(RxBuffer, bytesReceived);
             }
         }
@@ -169,14 +165,13 @@ int main()
             {
                 if (read(cmd_client_fd, buffer, len) > 0)
                 {
-                    //send_to_python(buffer, 4);
                     LoRa_transmit(&myLoRa,(uint8_t*)buffer,len,1000);
                 }
             }
             else
             {
                 // Connection closed by client
-                printf("Python command client disconnected.\n");
+                
                 close(cmd_client_fd);
                 cmd_client_fd = -1;
                 break; // Exit loop if command client disconnects

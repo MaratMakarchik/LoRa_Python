@@ -24,7 +24,7 @@ survey_timer: Optional[threading.Timer] = None
 running = True
 
 def data_survey(controller):
-    """Function to poll sensor data"""
+    # Function to poll sensor data
     try:
         command = f'st {BEACON_TIME} fn'
         controller.send_command(command.encode())
@@ -36,7 +36,7 @@ def data_survey(controller):
             schedule_next_survey(controller)
 
 def schedule_next_survey(controller):
-    """Schedule the next survey"""
+    # Schedule the next survey
     global survey_timer
     if running:
         survey_timer = threading.Timer(SURVEY_TIME, data_survey, args=(controller,))
@@ -44,7 +44,7 @@ def schedule_next_survey(controller):
         survey_timer.start()
 
 def load_sensor_config(config_path):
-    """Load sensor configuration from file"""
+    # Load sensor configuration from file
     sensors = []
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
@@ -66,15 +66,15 @@ def load_sensor_config(config_path):
         return None
 
 def get_project_root():
-    """Get project root directory"""
+    # Get project root directory
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def get_executable_path():
-    """Get path to executable file"""
+    # Get path to executable file
     return os.path.join(get_project_root(), 'file_c', 'bin', 'lora_app')
 
 def signal_handler(sig, frame):
-    """Signal handler for graceful shutdown"""
+    # Signal handler for graceful shutdown
     global running
     print_red("\nReceived shutdown signal. Shutting down...")
     running = False
@@ -133,11 +133,18 @@ def main():
         controller = LoraController()
         controller.start()  # Start background listener
 
-        print_green("Starting main application loop")
+        time.sleep(2)
+    
+        if controller.get_message() == 'Lora init':
+            print_green("The LoRa has been successfully initialized")
+        else:
+            print_red('The LoRa is not initialized')
+            sys.exit(1)
         
         # Start first survey
         data_survey(controller)
-
+        print_green("Starting main application loop")
+        
         # Main loop
         while running:
             try:
