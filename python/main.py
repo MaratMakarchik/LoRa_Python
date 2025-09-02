@@ -24,11 +24,9 @@ running = True
 def data_survey(controller: LoraController) -> None:
     """Poll sensor data and schedule next survey"""
     try:
-        if controller.is_connected():
-            command = f'st {BEACON_TIME} fn'
-            controller.send_command(command.encode())
-        else:
-            print_red("Controller not connected in data_survey")
+        command = f'st {BEACON_TIME} fn'
+        controller.send_command(command.encode())
+        
     except Exception as e:
         print_red(f"Error in data_survey: {e}")
     finally:
@@ -189,11 +187,6 @@ def main() -> None:
                         # Log invalid messages
                         with open(err_log_path, 'a', encoding='utf-8') as f:
                             f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - Invalid: {message}\n")
-                
-                # Check connection status
-                if not controller.is_connected():
-                    print_red("Connection lost. Exiting")
-                    break
 
                 time.sleep(0.1)
                 
