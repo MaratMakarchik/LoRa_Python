@@ -23,6 +23,7 @@ class SensorDatabase:
             sensor_id INTEGER NOT NULL,
             temperature REAL,
             co2_level INTEGER,
+            Vcc REAL,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (sensor_id) REFERENCES sensors (sensor_id)
         )
@@ -45,7 +46,7 @@ class SensorDatabase:
             # Если датчик с таким ID или местоположением уже существует
             return False
 
-    def add_measurement(self, sensor_id, temperature, co2_level):
+    def add_measurement(self, sensor_id, temperature, co2_level, Vcc):
         """Добавление измерения от датчика"""
         # Проверяем, существует ли датчик
         cursor = self.conn.execute(
@@ -58,8 +59,8 @@ class SensorDatabase:
         
         # Добавляем измерение
         self.conn.execute(
-            "INSERT INTO measurements (sensor_id, temperature, co2_level) VALUES (?, ?, ?)",
-            (sensor_id, temperature, co2_level)
+            "INSERT INTO measurements (sensor_id, temperature, co2_level, Vcc) VALUES (?, ?, ?, ?)",
+            (sensor_id, temperature, co2_level, Vcc)
         )
         self.conn.commit()
 

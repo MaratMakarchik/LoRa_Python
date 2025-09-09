@@ -80,7 +80,7 @@ def signal_handler(sig: int, frame) -> None:
 def filter_string(s: str) -> bool:
     """Validate message format"""
     parts = s.strip().split()
-    if len(parts) != 3:
+    if len(parts) != 4:
         return False
     
     # Validate sensor ID
@@ -98,7 +98,14 @@ def filter_string(s: str) -> bool:
     # Validate timestamp
     if not parts[2].isdigit():
         return False
-        
+    
+    try:
+        float_val = float(parts[3])
+        if '.' not in parts[3]:
+            return False
+    except ValueError:
+        return False
+    
     return True
 
 def wait_for_initialization(controller: LoraController, timeout: int = 10) -> bool:
@@ -181,8 +188,8 @@ def main() -> None:
                 if message: 
                     if filter_string(message):
                         print_green(f"Received: {message} | {time.strftime('%H:%M:%S')}")
-                        sensor_id, value, co2_level = message.strip().split()
-                        sensor_db.add_measurement(sensor_id, value, co2_level)
+                        sensor_id, value, co2_level, Vcc = message.strip().split()
+                        sensor_db.add_measurement(sensor_id, value, co2_level, Vcc)
                     else:
                         # Log invalid messages
                         print_red(f"Received ERROR: {message} | {time.strftime('%H:%M:%S')}")
