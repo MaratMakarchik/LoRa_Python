@@ -63,7 +63,10 @@ def load_sensor_config(config_path: str) -> Optional[List[Tuple[str, str]]]:
 
 def get_project_root() -> str:
     """Get project root directory"""
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # Получаем путь к текущему файлу (python/bdrv/main.py)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # Поднимаемся на два уровня вверх для получения корня проекта
+    return os.path.dirname(os.path.dirname(current_dir))
 
 def get_executable_path() -> str:
     """Get path to executable file"""
@@ -137,8 +140,9 @@ def main() -> None:
     sensor_db = SensorDatabase()
     
     # Load sensor configuration
-    config_path = os.path.join(get_project_root(), CONFIG_SENSOR)
-    err_log_path = os.path.join(get_project_root(), ERROR_MESSAGE_LOG)
+    project_root = get_project_root()
+    config_path = os.path.join(project_root, CONFIG_SENSOR)
+    err_log_path = os.path.join(project_root, ERROR_MESSAGE_LOG)
     sensors = load_sensor_config(config_path)
  
     if not sensors:
