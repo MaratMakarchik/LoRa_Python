@@ -11,7 +11,7 @@ def compile_lora_app():
     # Get the current directory (python folder)
     current_dir = os.path.dirname(os.path.abspath(__file__))
     # Get the project root directory (one level up from python)
-    project_root = os.path.dirname(current_dir)
+    project_root = os.path.dirname(os.path.dirname(current_dir))
     
     # Define paths to source files in the c directory
     c_dir = os.path.join(project_root, 'file_c')
