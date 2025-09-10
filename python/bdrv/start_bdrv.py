@@ -7,10 +7,10 @@ import signal
 from typing import Optional, List, Tuple
 
 # Import modules
-from compile_lora_app import compile_lora_app
-from sender import LoraController
+from python.LoRa.compile_lora_app import compile_lora_app
+from python.LoRa.sender import LoraController
 from database import SensorDatabase
-from terminal_output import print_green, print_red
+from python.help_fnc.terminal_output import print_green, print_red
 
 CONFIG_SENSOR = 'sensor.conf'
 ERROR_MESSAGE_LOG = 'error_message.log'
@@ -123,8 +123,6 @@ def wait_for_initialization(controller: LoraController, timeout: int = 10) -> bo
 
 def main() -> None:
     global running, survey_timer
-    
-    print_green('Starting program')
 
     # Set up signal handlers
     signal.signal(signal.SIGINT, signal_handler)

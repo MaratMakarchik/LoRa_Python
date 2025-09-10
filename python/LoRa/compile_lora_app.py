@@ -2,7 +2,7 @@ import subprocess
 import os
 import sys
 
-from terminal_output import print_green, print_red
+from python.help_fnc.terminal_output import print_green, print_red
 
 def compile_lora_app():
     """

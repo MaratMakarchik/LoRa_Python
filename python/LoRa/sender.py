@@ -6,7 +6,7 @@ import socket
 import threading
 import queue
 import time
-from terminal_output import print_green, print_red
+from python.help_fnc.terminal_output import print_green, print_red
 
 class LoraController:
     """

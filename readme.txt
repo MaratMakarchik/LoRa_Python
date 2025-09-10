@@ -1,4 +1,4 @@
-Для работы запустить python/main.py
+Для работы запустить start.py
 Заполнение бд происходит из файла sensor.conf по следующему образцу: номер_сенсора@расположение_сенсора
 Код для сенсоров смотри https://github.com/MaratMakarchik/STM32-data-collection-system
 
@@ -23,4 +23,13 @@ feature/bdrv:
 feature/bot:
     Разработка Telegramm бота:
         fix1:
-            
+
+order1:
+    Переработка структуры проекта:
+        fix1:
+            -Строгое разделение дирикторий по функциональному назначению:
+                -python/bdrv - работа с БД, опрос LoRa
+                -python/bot - работа с Telegramm bot
+                -python/help_fnc - доп функции для удобной отладки
+                -python/LoRa - работа с LoRa
+            -Добавлена входная точка в корне проекта start.py 
