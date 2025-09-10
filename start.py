@@ -7,20 +7,18 @@ def main() -> None:
     try:
         print_green('Starting program')
         
-        # Получаем корневую директорию проекта
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(os.path.dirname(current_dir))
+        # Получаем корневую директорию проекта (где находится start.py)
+        project_root = os.path.dirname(os.path.abspath(__file__))
+        print_green(f"Project root: {project_root}")
         
-        # Добавляем корневую директорию в PYTHONPATH
-        sys.path.insert(0, project_root)
-        
-        python_dir = os.path.join(project_root, 'python')
-        bdrv_dir = os.path.join(python_dir, 'bdrv')
-        bot_dir = os.path.join(python_dir, 'bot')
+        # Формируем правильные пути к скриптам
+        start_bdrv_file = os.path.join(project_root, 'python', 'bdrv', 'start_bdrv.py')
+        start_bot_file = os.path.join(project_root, 'python', 'bot', 'start_bot.py')
 
-        start_bdrv_file = os.path.join(bdrv_dir, 'start_bdrv.py')
-        start_bot_file = os.path.join(bot_dir, 'start_bot.py')
+        print_green(f"Looking for BDRV script: {start_bdrv_file}")
+        print_green(f"Looking for BOT script: {start_bot_file}")
 
+        # Проверяем существование файлов
         if not os.path.exists(start_bdrv_file):
             raise FileNotFoundError(f"File {start_bdrv_file} not found")
         if not os.path.exists(start_bot_file):
@@ -47,6 +45,9 @@ def main() -> None:
             env=env
         )
 
+        print_green("Processes started successfully")
+        print_green("Waiting for processes to complete...")
+        
         # Ожидание завершения процессов
         bdrv_process.wait()
         bot_process.wait()
