@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardRemove
 
-from app.database import SensorDatabase
+from python.bdrv.database import SensorDatabase
 from app.keyboards import get_amount_keyboard
 
 router = Router()
@@ -36,7 +36,7 @@ async def process_amount(message: types.Message, state: FSMContext):
                 return
 
             # Форматируем результаты
-            response = ["Последние измерения:\n"]
+            response = ["Последние измерения:"]
             for i, meas in enumerate(measurements, 1):
                 response.append(
                     f"{i}. 📅 {meas[5]} | "
