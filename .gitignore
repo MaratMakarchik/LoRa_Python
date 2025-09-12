@@ -3,3 +3,4 @@
 .vs/
 .c/bin/
 .error_message.log
+./python/bot/.env

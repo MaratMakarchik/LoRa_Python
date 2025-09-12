@@ -24,7 +24,7 @@ class SensorDatabase:
             temperature REAL,
             co2_level INTEGER,
             Vcc REAL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            timestamp DATETIME DEFAULT (datetime('now', 'localtime')),
             FOREIGN KEY (sensor_id) REFERENCES sensors (sensor_id)
         )
         """
