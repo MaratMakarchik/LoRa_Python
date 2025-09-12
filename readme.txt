@@ -13,7 +13,7 @@
              MOSI_pin = 10 
              SCLK_pin = 11
     2.Выполнить в командной строке  git clone https://github.com/MaratMakarchik/LoRa_Python.git
-    3.Создать в дириктории окружение python -m venv .venv и активировать его source .env/bin/activate
+    3.Создать в дириктории окружение python -m venv .venv и активировать его source .venv/bin/activate
     4.Установить дополнительные пакеты коммандами:
         -Для работы Telegramm бота:
             pip install aiogram python-dotenv
@@ -24,6 +24,13 @@
             sudo apt install ./wiringpi-3.x.deb
     5.Создать Telegramm, получить токен, создать в python/bot файл .env, в него вставить
       BOT_TOKEN = "ВАШ ТОКЕН"
+      Произвести настройку системы, добавив в этот же файл следующие поля
+        SURVEY_TIME = 5*60
+        SURVEY_TIME = 5*60
+        BEACON_TIME = 2*60
+        CONFIG_SENSOR = 'sensor.conf'
+        ERROR_MESSAGE_LOG = 'error_message.log'
+        (можно менять выводные файлы или времена опроса)
     7.Создать файла sensor.conf и заполнить по следующему образцу: номер_сенсора@расположение_сенсора
     8.Для автономной работы системы необходимо создать сервис sudo nano /etc/systemd/system/LoRa_script.service, вставить
         [Unit]
@@ -82,3 +89,4 @@ fixpriblem:
     Решение различных накопившихся проблем:
         fix1:
             -Исправлено время в БД с UTC+0 на локальное с сервера 
+            -Добавлена настройка основных параметров системы в .env

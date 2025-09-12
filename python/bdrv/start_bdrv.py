@@ -12,10 +12,7 @@ from python.LoRa.sender import LoraController
 from database import SensorDatabase
 from python.help_fnc.terminal_output import print_green, print_red
 
-CONFIG_SENSOR = 'sensor.conf'
-ERROR_MESSAGE_LOG = 'error_message.log'
-SURVEY_TIME = 5*60
-BEACON_TIME = 2*60
+from config import SURVEY_TIME, BEACON_TIME, CONFIG_SENSOR,ERROR_MESSAGE_LOG
 
 # Global variables for thread management
 survey_timer: Optional[threading.Timer] = None
@@ -61,6 +58,7 @@ def load_sensor_config(config_path: str) -> Optional[List[Tuple[str, str]]]:
         print_red(f'Error reading config file: {str(e)}')
         return None
 
+# вот это можно переписать, теперь корневой директорией считается где start.py
 def get_project_root() -> str:
     """Get project root directory"""
     # Получаем путь к текущему файлу (python/bdrv/main.py)
